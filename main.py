@@ -11,48 +11,49 @@ from core.loggers import setup_logging
 
 
 async def main(config: Config):
-    # Создаём объекты бота и диспетчера
+    # --- Инициализация Telegram-бота ---
     bot = Bot(
         token=config.tg_bot.token,
         default=DefaultBotProperties(parse_mode="Markdown")
     )
     dp = Dispatcher()
 
-    # Добавляем в диспетчер роутеры
+    # --- Подключение роутеров (обработчиков команд/сообщений) ---
     dp.include_routers(
         common.router,
         chat.router,
         other.router
     )
 
-    ai_agent = OpenAI(
+    # --- Инициализация OpenAI-агента ---
+    openai_client = OpenAI(
         api_key=config.aitunnel_api_key,
         base_url="https://api.aitunnel.ru/v1/"
     )
 
+    # --- Общие данные в пространстве имен dp (будут доступны во всех хендлерах) ---
+    dp.workflow_data.update({"admin_ids": config.tg_bot.admin_ids, "openai_client": openai_client})
 
-    # Добавляем переменные окружения в пространство имен диспетчера
-    dp.workflow_data.update({"admin_ids": config.tg_bot.admin_ids, "ai_agent": ai_agent})
-
-    # Удаляем апдейты, пришедшие вне работы бота
+    # --- Удаляем апдейты, пришедшие вне работы бота ---
     await bot.delete_webhook(drop_pending_updates=True)
 
     try:
-        # Запускаем polling для получения обновлений от Telegram
         logger.info("Starting bot...")
+        # --- Запуск цикла обработки апдейтов ---
         await dp.start_polling(bot)
     finally:
-        # Закрываем сессию бота, освобождая ресурсы
         logger.info("Stopping bot...")
+        # --- Корректное завершение работы ---
         await bot.session.close()
 
 
 if __name__ == '__main__':
-    # Инициализируем logging
+    # --- Настройка логирования ---
     setup_logging("core/loggers/config.yaml")
     logger = logging.getLogger(__name__)
 
-    # Инициализируем конфиг
+    # --- Загрузка конфига из окружения ---
     config = load_config()
 
+    # --- Запуск основного event-loop ---
     asyncio.run(main(config))
