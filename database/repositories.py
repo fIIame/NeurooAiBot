@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, insert
 
 from database.database import DatabaseConfig, Base
 from database.models import UsersOrm
@@ -15,9 +15,17 @@ class AsyncRepository:
 class UsersRepository(AsyncRepository):
 
     @staticmethod
+    async def insert_user(user_id: int, first_name: str) -> None:
+        async with DatabaseConfig.get_session() as session:
+            query = insert(UsersOrm).values(id=user_id, first_name=first_name)
+            await session.execute(query)
+            await session.commit()
+
+
+    @staticmethod
     async def activate_user(user_id: int) -> None:
-        async with DatabaseConfig.get_session().begin as session:
-            query = await update(UsersOrm).filter_by(id=user_id).values(is_activate=True)
+        async with DatabaseConfig.get_session() as session:
+            query = update(UsersOrm).filter_by(id=user_id).values(is_activate=True)
             await session.execute(query)
             await session.commit()
 
