@@ -1,4 +1,5 @@
-from sqlalchemy import select, update, insert
+from sqlalchemy import update, insert
+from sqlalchemy.dialects.postgresql import insert
 
 from database.database import DatabaseConfig, Base
 from database.models import UsersOrm
@@ -17,7 +18,11 @@ class UsersRepository(AsyncRepository):
     @staticmethod
     async def insert_user(user_id: int, first_name: str) -> None:
         async with DatabaseConfig.get_session() as session:
-            query = insert(UsersOrm).values(id=user_id, first_name=first_name)
+            query = (
+                insert(UsersOrm)
+                .values(id=user_id, first_name=first_name)
+                .on_conflict_do_nothing(index_elements=['id'])
+            )
             await session.execute(query)
             await session.commit()
 
