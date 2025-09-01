@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from openai import OpenAI
 
-from bot.handlers import common, chat, other
+from bot.handlers import common, chat
 from core.config import load_config, Config
 from core.loggers import setup_logging
 from database import init_db
@@ -22,8 +22,7 @@ async def main(config: Config):
     # --- Подключение роутеров (обработчиков команд/сообщений) ---
     dp.include_routers(
         common.router,
-        chat.router,
-        other.router
+        chat.router
     )
 
     await init_db(config.db.asyncpg_url)

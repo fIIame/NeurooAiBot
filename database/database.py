@@ -21,7 +21,7 @@ class DatabaseConfig:
 
 
     @classmethod
-    def async_session_maker(cls) -> AsyncSession:
+    def get_session(cls) -> AsyncSession:
         if cls.__async_session_maker:
             return cls.__async_session_maker()
 

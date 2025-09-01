@@ -24,7 +24,7 @@ class UsersRepository(AsyncRepository):
     @staticmethod
     async def is_user_activated(user_id: int) -> bool:
         async with DatabaseConfig.get_session() as session:
-            query = await select(UsersOrm).filter_by(id=user_id)
+            query = select(UsersOrm).filter_by(id=user_id)
             result = await session.execute(query)
             user = result.scalars().first()
-            return user.is_activated
+            return user.is_activate if user else False
