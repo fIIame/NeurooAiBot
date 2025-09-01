@@ -25,6 +25,7 @@ async def main(config: Config):
         chat.router
     )
 
+    # --- Инициализация базы данных ---
     await init_db(config.db.asyncpg_url)
 
     # --- Инициализация OpenAI-агента ---
@@ -40,11 +41,11 @@ async def main(config: Config):
     await bot.delete_webhook(drop_pending_updates=True)
 
     try:
-        logger.info("Starting bot...")
+        logger.info("Бот успешно запущен")
         # --- Запуск цикла обработки апдейтов ---
         await dp.start_polling(bot)
     finally:
-        logger.info("Stopping bot...")
+        logger.info("Бот корректно остановлен")
         # --- Корректное завершение работы ---
         await bot.session.close()
 

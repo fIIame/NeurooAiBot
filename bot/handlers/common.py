@@ -13,7 +13,7 @@ router = Router()
 async def process_start_handler(message: Message):
     user_id = message.from_user.id
     first_name = message.from_user.first_name
-    await UsersRepository.insert_user(user_id=user_id, first_name=first_name)
+    await UsersRepository.add_user(user_id=user_id, first_name=first_name)
 
     await message.answer(
         text=(

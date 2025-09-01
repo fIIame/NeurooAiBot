@@ -12,7 +12,7 @@ router = Router()
 @router.callback_query(ChatCallback.filter())
 async def process_dialog_callback(query: CallbackQuery):
     user_id = query.from_user.id
-    await UsersRepository.activate_user(user_id=user_id)
+    await UsersRepository.set_user_active(user_id=user_id)
 
     await query.message.answer(text="Отлично, давай начинать!")
     await query.answer()

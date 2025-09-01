@@ -1,4 +1,3 @@
-from core.config import Config
 from database.database import DatabaseConfig
 from database.repositories import AsyncRepository
 

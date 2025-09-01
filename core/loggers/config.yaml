@@ -1,14 +1,17 @@
 version: 1
 disable_existing_loggers: False
 
-
 formatters:
   default:
     format: '#%(levelname)-8s %(name)s:%(funcName)s - %(message)s'
 
   main_formatter:
-    format: '#%(levelname)s - %(filename)s - %(message)s'
+    format: '%(asctime)s #%(levelname)s - %(filename)s - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
 
+  database_formatter:
+    format: '%(asctime)s #%(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
 
 handlers:
   default:
@@ -19,10 +22,19 @@ handlers:
     class: logging.StreamHandler
     formatter: main_formatter
 
+  database_handler:
+    class: logging.StreamHandler
+    formatter: database_formatter
+
 loggers:
   __main__:
     level: INFO
     handlers: [main_handler]
+    propagate: False
+
+  database:
+    level: INFO
+    handlers: [database_handler]
     propagate: False
 
   root:
