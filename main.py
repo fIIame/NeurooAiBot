@@ -3,7 +3,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from bot.handlers import common, chat
 from core.config import load_config, Config
@@ -15,7 +15,7 @@ async def main(config: Config):
     # --- Инициализация Telegram-бота ---
     bot = Bot(
         token=config.tg_bot.token,
-        default=DefaultBotProperties(parse_mode="Markdown")
+        default=DefaultBotProperties(parse_mode="HTML")
     )
     dp = Dispatcher()
 
@@ -28,7 +28,7 @@ async def main(config: Config):
     await init_db(config.db.asyncpg_url)
 
     # --- Инициализация OpenAI-агента ---
-    openai_client = OpenAI(
+    openai_client = AsyncOpenAI(
         api_key=config.aitunnel_api_key,
         base_url="https://api.aitunnel.ru/v1/"
     )
