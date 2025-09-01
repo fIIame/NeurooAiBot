@@ -8,6 +8,7 @@ from openai import OpenAI
 from bot.handlers import common, chat, other
 from core.config import load_config, Config
 from core.loggers import setup_logging
+from database import init_db
 
 
 async def main(config: Config):
@@ -24,6 +25,8 @@ async def main(config: Config):
         chat.router,
         other.router
     )
+
+    await init_db(config.db.asyncpg_url)
 
     # --- Инициализация OpenAI-агента ---
     openai_client = OpenAI(
