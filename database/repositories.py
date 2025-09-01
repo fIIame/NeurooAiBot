@@ -1,4 +1,4 @@
-from sqlalchemy import update, insert
+from sqlalchemy import update, select
 from sqlalchemy.dialects.postgresql import insert
 
 from database.database import DatabaseConfig, Base
