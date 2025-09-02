@@ -12,17 +12,24 @@ router = Router()
 
 @router.message()
 async def handle_other_messages(message: Message, bot: Bot, openai_client: AsyncOpenAI):
-    is_activated = await UsersRepository.is_user_activated(message.from_user.id)
-    if not is_activated:
+    # Проверяем, активирован ли пользователь
+    if not await UsersRepository.is_user_activated(message.from_user.id):
         await message.answer("Для начала работы введите /start")
         return
 
     # Сообщаем, что бот "печатает"
+    processing_msg = await message.answer("💡 Запрос принят! Ответ появится примерно через 10–15 секунд.")
     await bot.send_chat_action(
-        chat_id=message.chat.id,
-        action=ChatAction.TYPING
+        message.chat.id,
+        ChatAction.TYPING
     )
 
-    user_message = message.text
-    ai_reply = await get_ai_reply(text=user_message, openai_client=openai_client)
-    await message.answer(text=ai_reply)
+    # Получаем ответ от модели
+    ai_reply = await get_ai_reply(
+        text=message.text,
+        openai_client=openai_client
+    )
+
+    # Удаляем "заглушку" и отправляем реальный ответ
+    await processing_msg.delete()
+    await message.reply(ai_reply)
