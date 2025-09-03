@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database.database import DatabaseConfig, Base
 from database.models import UsersOrm
+from core.lexicon import LOGGING_LEXICON
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +18,13 @@ class AsyncRepository:
         try:
             async with DatabaseConfig.get_engine().begin() as connection:
                 await connection.run_sync(Base.metadata.create_all)
-                logger.info("Таблицы базы данных успешно созданы")
+                logger.info(LOGGING_LEXICON["logging"]["database"]["tables"]["created"])
 
         except SQLAlchemyError as e:
-            logger.error(f"Ошибка SQLAlchemy при создании таблиц базы данных: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["create_sqlalchemy_error"].format(e))
 
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при создании таблиц базы данных: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["create_unexpected_error"].format(e))
 
 
 class UsersRepository(AsyncRepository):
@@ -41,10 +42,10 @@ class UsersRepository(AsyncRepository):
                 await session.commit()
 
         except SQLAlchemyError as e:
-            logger.error(f"Ошибка SQLAlchemy при добавлении пользователя: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["add_sqlalchemy_error"])
 
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при добавлении пользователя: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["add_unexpected_error"])
 
     @staticmethod
     async def set_user_active(user_id: int) -> None:
@@ -55,10 +56,10 @@ class UsersRepository(AsyncRepository):
                 await session.commit()
 
         except SQLAlchemyError as e:
-            logger.error(f"Не удалось активировать пользователя {user_id}: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["activate_sqlalchemy_error"].format(e))
 
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при активации пользователя {user_id}: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["activate_unexpected_error"].format(e))
 
     @staticmethod
     async def is_user_activated(user_id: int) -> Optional[bool]:
@@ -70,7 +71,7 @@ class UsersRepository(AsyncRepository):
                 return user.is_activate if user else False
 
         except SQLAlchemyError as e:
-            logger.error(f"Не удалось получить статус активации пользователя {user_id}: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["status_sqlalchemy_error"].format(e))
 
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при получении статуса активации пользователя {user_id}: {e}")
+            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["status_unexpected_error"].format(e))

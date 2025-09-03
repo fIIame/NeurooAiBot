@@ -2,8 +2,9 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from database.repositories import UsersRepository
 from bot.keyboards.inline import dialog_start_kb
+from bot.lexicon import BOT_LEXICON
+from database.repositories import UsersRepository
 
 
 router = Router()
@@ -16,10 +17,6 @@ async def process_start_handler(message: Message):
     await UsersRepository.add_user(user_id=user_id, first_name=first_name)
 
     await message.answer(
-        text=(
-            "<b>Привет! Я Neuroo 👾</b>\n"
-            "Хочешь <i>задать вопрос</i> или получить <i>подсказку</i>? 💫\n\n"
-            "<code>Нажми на кнопку ниже, чтобы начать чат 👇🏻</code> "
-        ),
+        text=(BOT_LEXICON["bot"]["messages"]["start"]),
         reply_markup=dialog_start_kb
     )

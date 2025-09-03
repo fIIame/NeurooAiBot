@@ -1,0 +1,21 @@
+logging:
+  bot:
+    start: "Бот успешно запущен"
+    stop: "Бот корректно остановлен"
+
+  database:
+    init:
+      fail: "База данных не инициализирована."
+
+    tables:
+      created: "Таблицы базы данных успешно созданы"
+      create_sqlalchemy_error: "Ошибка SQLAlchemy при создании таблиц базы данных {}"
+      create_unexpected_error: "Неожиданная ошибка при создании таблиц базы данных {}"
+
+    user:
+      add_sqlalchemy_error: "Ошибка SQLAlchemy при добавлении пользователя {}"
+      add_unexpected_error: "Неожиданная ошибка при добавлении пользователя {}"
+      activate_sqlalchemy_error: "Не удалось активировать пользователя {}: {}"
+      activate_unexpected_error: "Неожиданная ошибка при активации пользователя {}: {}"
+      status_sqlalchemy_error: "Не удалось получить статус активации пользователя {}: {}"
+      status_unexpected_error: "Неожиданная ошибка при получении статуса активации пользователя {}: {}"

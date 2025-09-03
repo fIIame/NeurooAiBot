@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from openai import AsyncOpenAI
 
 from bot.handlers import common, chat
+from core.lexicon import LOGGING_LEXICON
 from core.config import load_config, Config
 from core.loggers import setup_logging
 from database import init_db
@@ -41,11 +42,11 @@ async def main(config: Config):
     await bot.delete_webhook(drop_pending_updates=True)
 
     try:
-        logger.info("Бот успешно запущен")
+        logger.info(LOGGING_LEXICON["logging"]["bot"]["start"])
         # --- Запуск цикла обработки апдейтов ---
         await dp.start_polling(bot)
     finally:
-        logger.info("Бот корректно остановлен")
+        logger.info(LOGGING_LEXICON["logging"]["bot"]["stop"])
         # --- Корректное завершение работы ---
         await bot.session.close()
 

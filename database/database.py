@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSessio
 from sqlalchemy.orm import DeclarativeBase
 
 from core.exceptions.database import InitializationError
+from core.lexicon import LOGGING_LEXICON
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class DatabaseConfig:
     def init_db(cls, database_url: str):
         cls.__async_engine = create_async_engine(
             database_url,
-            echo=True
+            echo=False
         )
         cls.__async_session_maker = async_sessionmaker(cls.__async_engine)
 
@@ -26,14 +27,14 @@ class DatabaseConfig:
     def get_engine(cls) -> AsyncEngine:
         if cls.__async_engine:
             return cls.__async_engine
-        logger.critical("Движок базы данных не инициализирован. Попытка обращения к базе без инициализации")
+        logger.critical(LOGGING_LEXICON["logging"]["database"]["init"]["fail"])
         raise InitializationError()
 
     @classmethod
     def get_session(cls) -> AsyncSession:
         if cls.__async_session_maker:
             return cls.__async_session_maker()
-        logger.critical("Движок базы данных не инициализирован. Попытка обращения к базе без инициализации")
+        logger.critical(LOGGING_LEXICON["logging"]["database"]["init"]["fail"])
         raise InitializationError()
 
 
