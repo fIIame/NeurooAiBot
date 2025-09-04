@@ -23,7 +23,7 @@ class AIService:
             messages.append(
                 ChatCompletionSystemMessageParam(
                     role="system",
-                    content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context=memories_context)
+                    content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context)
                 )
             )
 
