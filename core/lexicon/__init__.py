@@ -1,1 +1,1 @@
-from .lexicon import LOGGING_LEXICON
+from .lexicon import LOGGING_LEXICON, RULE_BASED_LEXICON

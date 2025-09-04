@@ -3,10 +3,12 @@ from typing import List
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
+
 class AIService:
 
     @staticmethod
-    async def get_reply(user_text: str, memories_context: str, openai_client: AsyncOpenAI) -> str:
+    async def get_reply(user_text: str, memories_context: str, openai_client: AsyncOpenAI, model: str) -> str:
+
         messages: List = [
             ChatCompletionSystemMessageParam(role="system", content="Базовый умный помощник"),
         ]
@@ -22,7 +24,7 @@ class AIService:
         )
 
         response = await openai_client.chat.completions.create(
-            model="gpt-5-mini",
+            model=model,
             messages=messages
         )
 

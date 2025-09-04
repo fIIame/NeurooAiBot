@@ -4,8 +4,8 @@ from openai import AsyncOpenAI
 class MemoryService:
 
     @staticmethod
-    async def save(user_id: int, text: str, openai_client: AsyncOpenAI):
-        await UsersMemoriesRepository.safe_memory(user_id, text, openai_client)
+    async def save(user_id: int, text: str, openai_client: AsyncOpenAI, model: str) -> None:
+        await UsersMemoriesRepository.safe_memory(user_id, text, openai_client, model)
 
     @staticmethod
     async def get(user_id: int, query_text: str, openai_client: AsyncOpenAI, limit: int = 5):

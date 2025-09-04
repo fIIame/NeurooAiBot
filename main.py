@@ -36,7 +36,7 @@ async def main(config: Config):
     )
 
     # --- Общие данные в пространстве имен dp (будут доступны во всех хендлерах) ---
-    dp.workflow_data.update({"admin_ids": config.tg_bot.admin_ids, "openai_client": openai_client})
+    dp.workflow_data.update({"admin_ids": config.tg_bot.admin_ids, "openai_client": openai_client, "model": "gpt-5-mini"})
 
     # --- Удаляем апдейты, пришедшие вне работы бота ---
     await bot.delete_webhook(drop_pending_updates=True)
