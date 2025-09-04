@@ -34,6 +34,10 @@ class AiMemoryUtils:
         return False
 
     @staticmethod
+    def _is_question(text: str) -> bool:
+        return text.strip().endswith("?")
+
+    @staticmethod
     def _is_important_keyword(text: str) -> bool:
         for important_keyword in RULE_BASED_LEXICON["rules"]["important_keywords"]:
             if important_keyword.lower() in text.lower().split():
@@ -44,17 +48,18 @@ class AiMemoryUtils:
     async def _ask_ai_should_save(text: str, openai_client: AsyncOpenAI, model: str) -> str:
 
         messages: List = [
-            ChatCompletionSystemMessageParam(role="system", content=(
-                "Ты фильтр сообщений."
-                "Ответь только 'да' или 'нет', нужно ли сохранять сообщение о пользователе."
-            )),
+            ChatCompletionSystemMessageParam(
+                role="system",
+                content=(
+                    "Ты фильтр сообщений. Ответь только 'да' или 'нет', нужно ли сохранять сообщение о пользователе в памяти?."
+                )
+            ),
             ChatCompletionUserMessageParam(role="user", content=text)
         ]
 
         response = await openai_client.chat.completions.create(
             model=model,
-            messages=messages,
-            max_tokens=5
+            messages=messages
         )
 
         answer = response.choices[0].message.content.strip().lower()
@@ -62,9 +67,10 @@ class AiMemoryUtils:
 
     @classmethod
     async def is_ai_should_save(cls, text: str, openai_client: AsyncOpenAI, model: str) -> bool:
-        if cls._is_short_message(text) or cls._is_noise_pattern(text):
+        if cls._is_short_message(text) or cls._is_noise_pattern(text) or cls._is_question(text):
             return False
-        if cls._is_important_keyword(text):
-            answer = await cls._ask_ai_should_save(text, openai_client, model)
-            return answer == "да"
-        return False
+        elif cls._is_important_keyword(text):
+            return True
+        answer = await cls._ask_ai_should_save(text, openai_client, model)
+        print(answer)
+        return answer == "да"

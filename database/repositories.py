@@ -82,9 +82,8 @@ class UsersRepository(AsyncRepository):
 class UsersMemoriesRepository(AsyncRepository):
     @staticmethod
     async def safe_memory(user_id: int, text: str, openai_client: AsyncOpenAI, model: str) -> None:
-        vector = await AiMemoryUtils.get_vector(text, openai_client)
-
         if await AiMemoryUtils.is_ai_should_save(text=text, openai_client=openai_client, model=model):
+            vector = await AiMemoryUtils.get_vector(text, openai_client)
             async with DatabaseConfig.get_session() as session:
                 query = insert(UsersMemoriesOrm).values(user_id=user_id, message_text=text, embedding=vector)
                 await session.execute(query)
