@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
@@ -18,14 +18,12 @@ class AIService:
             )
         ]
 
-        if memories_context:
-            # Добавляем память пользователя как отдельное системное сообщение
-            messages.append(
-                ChatCompletionSystemMessageParam(
-                    role="system",
-                    content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context)
-                )
+        messages.append(
+            ChatCompletionSystemMessageParam(
+                role="system",
+                content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context)
             )
+        )
 
         messages.append(
             ChatCompletionUserMessageParam(role="user", content=user_text)
