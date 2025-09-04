@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, List
 
-from sqlalchemy import update, select
+from sqlalchemy import update, select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from openai import AsyncOpenAI
@@ -95,12 +95,19 @@ class UsersMemoriesRepository(AsyncRepository):
 
         async with DatabaseConfig.get_session() as session:
             query = (
-                select(UsersMemoriesOrm).
+                select(UsersMemoriesOrm.message_text).
                 filter_by(user_id=user_id).
                 order_by(UsersMemoriesOrm.embedding.op("<->")(vector))
                 .limit(limit)
             )
 
             result = await session.execute(query)
-            rows = result.fetchall()
-            return [row[0].message_text for row in rows]
+            rows = result.scalars().all()
+            return list(rows)
+
+    @staticmethod
+    async def count_memories(user_id: int) -> int:
+        async with DatabaseConfig.get_session() as session:
+            query = select(func.count()).select_from(UsersMemoriesOrm).filter_by(user_id=user_id)
+            result = await session.execute(query)
+            return result.scalar()

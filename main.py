@@ -9,6 +9,7 @@ from bot.handlers import common, chat
 from core.lexicon import LOGGING_LEXICON
 from core.config import load_config, Config
 from core.loggers import setup_logging
+from core.utils.enums import OpenAiModels
 from database import init_db
 
 
@@ -16,7 +17,7 @@ async def main(config: Config):
     # --- Инициализация Telegram-бота ---
     bot = Bot(
         token=config.tg_bot.token,
-        default=DefaultBotProperties(parse_mode="HTML")
+        default=DefaultBotProperties(parse_mode="MarkdownV2")
     )
     dp = Dispatcher()
 
@@ -36,7 +37,11 @@ async def main(config: Config):
     )
 
     # --- Общие данные в пространстве имен dp (будут доступны во всех хендлерах) ---
-    dp.workflow_data.update({"admin_ids": config.tg_bot.admin_ids, "openai_client": openai_client, "model": "gpt-5-mini"})
+    dp.workflow_data.update({
+        "admin_ids": config.tg_bot.admin_ids,
+        "openai_client": openai_client,
+        "model": OpenAiModels.GPT_5_MINI.value
+    })
 
     # --- Удаляем апдейты, пришедшие вне работы бота ---
     await bot.delete_webhook(drop_pending_updates=True)

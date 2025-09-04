@@ -1,26 +1,23 @@
 import re
-from typing import List, Optional
+from typing import List
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from core.lexicon import RULE_BASED_LEXICON
+from core.lexicon import RULE_BASED_LEXICON, SYSTEM_PROMPTS_LEXICON
+from core.utils.enums import OpenAiModels
 
 
 class AiMemoryUtils:
-
     @staticmethod
-    async def get_vector(
-            text: str,
-            openai_client: AsyncOpenAI
-    ) -> List[float]:
-
+    async def get_vector(text: str, openai_client: AsyncOpenAI) -> List[float]:
         emb = await openai_client.embeddings.create(
-            model="text-embedding-3-small",
+            model=OpenAiModels.TEXT_EMBEDDING_3_SMALL.value,
             input=text
         )
-        vector = emb.data[0].embedding
-        return vector
+        return emb.data[0].embedding
+
+    # ------------------- Rule-based фильтры -------------------
 
     @staticmethod
     def _is_short_message(text: str) -> bool:
@@ -28,10 +25,7 @@ class AiMemoryUtils:
 
     @staticmethod
     def _is_noise_pattern(text: str) -> bool:
-        for noise_pattern in RULE_BASED_LEXICON["rules"]["noise_patterns"]:
-            if re.match(noise_pattern, text):
-                return True
-        return False
+        return any(re.match(pattern, text) for pattern in RULE_BASED_LEXICON["rules"]["noise_patterns"])
 
     @staticmethod
     def _is_question(text: str) -> bool:
@@ -39,20 +33,18 @@ class AiMemoryUtils:
 
     @staticmethod
     def _is_important_keyword(text: str) -> bool:
-        for important_keyword in RULE_BASED_LEXICON["rules"]["important_keywords"]:
-            if important_keyword.lower() in text.lower().split():
-                return True
-        return False
+        words = text.lower().split()
+        return any(keyword.lower() in words for keyword in RULE_BASED_LEXICON["rules"]["important_keywords"])
+
+    # ------------------- OpenAI фильтр -------------------
 
     @staticmethod
     async def _ask_ai_should_save(text: str, openai_client: AsyncOpenAI, model: str) -> str:
-
-        messages: List = [
+        """Запрос к OpenAI: стоит ли сохранять сообщение в память."""
+        messages = [
             ChatCompletionSystemMessageParam(
                 role="system",
-                content=(
-                    "Ты фильтр сообщений. Ответь только 'да' или 'нет', нужно ли сохранять сообщение о пользователе в памяти?."
-                )
+                content=SYSTEM_PROMPTS_LEXICON["system_prompt"]["memory_filter"]
             ),
             ChatCompletionUserMessageParam(role="user", content=text)
         ]
@@ -61,16 +53,17 @@ class AiMemoryUtils:
             model=model,
             messages=messages
         )
+        return response.choices[0].message.content.strip().lower()
 
-        answer = response.choices[0].message.content.strip().lower()
-        return answer.lower()
+    # ------------------- Основная логика -------------------
 
     @classmethod
     async def is_ai_should_save(cls, text: str, openai_client: AsyncOpenAI, model: str) -> bool:
+        """Решение: сохранять ли сообщение пользователя в память."""
         if cls._is_short_message(text) or cls._is_noise_pattern(text) or cls._is_question(text):
             return False
-        elif cls._is_important_keyword(text):
+        if cls._is_important_keyword(text):
             return True
+
         answer = await cls._ask_ai_should_save(text, openai_client, model)
-        print(answer)
         return answer == "да"
