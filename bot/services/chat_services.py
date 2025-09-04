@@ -9,7 +9,7 @@ from core.lexicon import SYSTEM_PROMPTS_LEXICON
 class AIService:
 
     @staticmethod
-    async def get_reply(user_text: str, memories_context: Optional[str], openai_client: AsyncOpenAI, model: str) -> str:
+    async def get_reply(user_text: str, memories_context: str, openai_client: AsyncOpenAI, model: str) -> str:
 
         messages: List = [
             ChatCompletionSystemMessageParam(
@@ -23,7 +23,7 @@ class AIService:
             messages.append(
                 ChatCompletionSystemMessageParam(
                     role="system",
-                    content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context)
+                    content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context=memories_context)
                 )
             )
 

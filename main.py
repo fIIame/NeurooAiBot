@@ -17,7 +17,7 @@ async def main(config: Config):
     # --- Инициализация Telegram-бота ---
     bot = Bot(
         token=config.tg_bot.token,
-        default=DefaultBotProperties(parse_mode="MarkdownV2")
+        default=DefaultBotProperties(parse_mode="Markdown")
     )
     dp = Dispatcher()
 

@@ -44,7 +44,7 @@ class AiMemoryUtils:
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system",
-                content=SYSTEM_PROMPTS_LEXICON["system_prompt"]["memory_filter"]
+                content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["memory_filter"]
             ),
             ChatCompletionUserMessageParam(role="user", content=text)
         ]

@@ -34,7 +34,7 @@ async def handle_other_messages(
     # --- Работа с памятью ---
     await MemoryService.save(user_id, user_text, openai_client, model)
     memories = await MemoryService.get(user_id, user_text, openai_client)
-    memories_context = "\n".join(memories) if memories else None
+    memories_context = "\n".join(memories) if memories else ""
 
     # --- Получаем ответ от модели ---
     ai_reply = await AIService.get_reply(user_text, memories_context, openai_client, model)
