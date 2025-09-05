@@ -7,6 +7,7 @@ from bot.services.chat_services import AIService
 from bot.services.memory_services import MemoryService
 from bot.lexicon import BOT_LEXICON
 from database.repositories import UsersRepository
+from core.utils.ai_utils import AiMemoryUtils
 
 
 router = Router()
@@ -32,9 +33,10 @@ async def handle_other_messages(
     await bot.send_chat_action(message.chat.id, ChatAction.TYPING)
 
     # --- Работа с памятью ---
-    await MemoryService.save(user_id, user_text, openai_client, model)
-    memories = await MemoryService.get(user_id, user_text, openai_client)
-    memories_context = "\n".join(memories) if memories else ""
+    vector = await AiMemoryUtils.get_vector(user_text, openai_client)
+    await MemoryService.save(user_id, user_text, vector, openai_client, model)
+    memories = await MemoryService.get(user_id, vector)
+    memories_context = "\n".join(memories) if memories else "Память пользователя пуста."
 
     # --- Получаем ответ от модели ---
     ai_reply = await AIService.get_reply(user_text, memories_context, openai_client, model)

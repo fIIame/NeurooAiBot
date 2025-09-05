@@ -33,7 +33,7 @@ class AiMemoryUtils:
 
     @staticmethod
     def _is_important_keyword(text: str) -> bool:
-        words = text.lower().split()
+        words = text.lower()
         return any(keyword.lower() in words for keyword in RULE_BASED_LEXICON["rules"]["important_keywords"])
 
     # ------------------- OpenAI фильтр -------------------

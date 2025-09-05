@@ -10,24 +10,20 @@ class AIService:
 
     @staticmethod
     async def get_reply(user_text: str, memories_context: str, openai_client: AsyncOpenAI, model: str) -> str:
-
         messages: List = [
             ChatCompletionSystemMessageParam(
                 role="system",
                 content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["base_assistant"]
-            )
-        ]
-
-        messages.append(
+            ),
             ChatCompletionSystemMessageParam(
                 role="system",
                 content=SYSTEM_PROMPTS_LEXICON["system_prompts"]["rule_memory"].format(memories_context)
+            ),
+            ChatCompletionUserMessageParam(
+                role="user",
+                content=user_text
             )
-        )
-
-        messages.append(
-            ChatCompletionUserMessageParam(role="user", content=user_text)
-        )
+        ]
 
         response = await openai_client.chat.completions.create(
             model=model,

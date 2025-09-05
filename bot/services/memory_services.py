@@ -8,11 +8,11 @@ from database.repositories import UsersMemoriesRepository
 class MemoryService:
 
     @staticmethod
-    async def save(user_id: int, text: str, openai_client: AsyncOpenAI, model: str) -> None:
+    async def save(user_id: int, text: str, vector: List[float], openai_client: AsyncOpenAI, model: str) -> None:
         count = await UsersMemoriesRepository.count_memories(user_id)
         if count < 50:
-            await UsersMemoriesRepository.safe_memory(user_id, text, openai_client, model)
+            await UsersMemoriesRepository.safe_memory(user_id, text, vector, openai_client, model)
 
     @staticmethod
-    async def get(user_id: int, query_text: str, openai_client: AsyncOpenAI, limit: int = 5) -> List[str]:
-        return await UsersMemoriesRepository.get_memory(user_id, query_text, openai_client, limit)
+    async def get(user_id: int, vector: List[float], limit: int = 5) -> List[str]:
+        return await UsersMemoriesRepository.get_memory(user_id, vector, limit)
