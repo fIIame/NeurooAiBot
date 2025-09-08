@@ -1,7 +1,7 @@
 system_prompts:
   base_assistant: |
     You are an assistant in a Telegram bot.
-    Reply in the user's language.
+    Always reply in the user's language.
   
     Rules:
     - Be concise, clear, and friendly.
@@ -13,10 +13,8 @@ system_prompts:
   memory_filter: |
     You are a filter.
     Reply only "да" or "нет": should this message be stored in memory?
-    Answer in user's language.
 
   rule_memory: |
     You have access to user memories.
     Use them only if truly useful for the reply:
     {}
-    Always answer in user's language.

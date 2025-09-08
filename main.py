@@ -14,6 +14,13 @@ from database import init_db
 
 
 async def main(config: Config):
+    """
+    Основная точка входа для запуска Telegram-бота.
+
+    Args:
+        config (Config): Загруженный объект конфигурации приложения.
+    """
+
     # --- Инициализация Telegram-бота ---
     bot = Bot(
         token=config.tg_bot.token,
@@ -36,7 +43,7 @@ async def main(config: Config):
         base_url="https://api.aitunnel.ru/v1/"
     )
 
-    # --- Общие данные в пространстве имен dp (будут доступны во всех хендлерах) ---
+    # --- Общие данные, доступные во всех хендлерах ---
     dp.workflow_data.update({
         "admin_ids": config.tg_bot.admin_ids,
         "openai_client": openai_client,
@@ -45,7 +52,7 @@ async def main(config: Config):
         "embedding_model": OpenAiModels.TEXT_EMBEDDING_3_SMALL.value
     })
 
-    # --- Удаляем апдейты, пришедшие вне работы бота ---
+    # --- Удаляем апдейты, пришедшие до старта бота ---
     await bot.delete_webhook(drop_pending_updates=True)
 
     try:
@@ -59,11 +66,16 @@ async def main(config: Config):
 
 
 if __name__ == '__main__':
+    """
+    Точка запуска приложения.
+    Настраивает логирование, загружает конфигурацию и стартует event-loop.
+    """
+
     # --- Настройка логирования ---
     setup_logging("core/loggers/config.yaml")
     logger = logging.getLogger(__name__)
 
-    # --- Загрузка конфига из окружения ---
+    # --- Загрузка конфигурации из окружения ---
     config = load_config()
 
     # --- Запуск основного event-loop ---
