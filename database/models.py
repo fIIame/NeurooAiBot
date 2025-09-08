@@ -24,6 +24,6 @@ class UsersMemoriesOrm(Base):
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     user_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
-    message_text: Mapped[str] = mapped_column(String, nullable=False)
+    message_text: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     embedding: Mapped[list] = mapped_column(Vector(1536), nullable=False)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False, default=datetime.utcnow)

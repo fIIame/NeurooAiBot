@@ -82,12 +82,10 @@ class UsersRepository(AsyncRepository):
 class UsersMemoriesRepository(AsyncRepository):
     @staticmethod
     async def safe_memory(user_id: int, text: str, vector: List[float], openai_client: AsyncOpenAI, model: str) -> None:
-        should_safe = await AiMemoryUtils.is_ai_should_save(text=text, openai_client=openai_client, model=model)
-        if should_safe:
-            async with DatabaseConfig.get_session() as session:
-                query = insert(UsersMemoriesOrm).values(user_id=user_id, message_text=text, embedding=vector)
-                await session.execute(query)
-                await session.commit()
+        async with DatabaseConfig.get_session() as session:
+            query = insert(UsersMemoriesOrm).values(user_id=user_id, message_text=text, embedding=vector)
+            await session.execute(query)
+            await session.commit()
 
     @staticmethod
     async def get_memory(user_id: int, vector: List[float], limit: int = 5) -> List[str]:

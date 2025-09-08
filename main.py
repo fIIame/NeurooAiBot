@@ -40,7 +40,9 @@ async def main(config: Config):
     dp.workflow_data.update({
         "admin_ids": config.tg_bot.admin_ids,
         "openai_client": openai_client,
-        "model": OpenAiModels.GPT_5_MINI.value
+        "chat_model": OpenAiModels.GPT_5_MINI.value,
+        "filter_model": OpenAiModels.GPT_5_NANO.value,
+        "embedding_model": OpenAiModels.TEXT_EMBEDDING_3_SMALL.value
     })
 
     # --- Удаляем апдейты, пришедшие вне работы бота ---

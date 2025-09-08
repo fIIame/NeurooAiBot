@@ -10,9 +10,9 @@ from core.utils.enums import OpenAiModels
 
 class AiMemoryUtils:
     @staticmethod
-    async def get_vector(text: str, openai_client: AsyncOpenAI) -> List[float]:
+    async def get_vector(text: str, openai_client: AsyncOpenAI, model: str) -> List[float]:
         emb = await openai_client.embeddings.create(
-            model=OpenAiModels.TEXT_EMBEDDING_3_SMALL.value,
+            model=model,
             input=text
         )
         return emb.data[0].embedding
