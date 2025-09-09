@@ -1,6 +1,7 @@
 import yaml
 from core.utils.text_normalization import normalize_text
 
+
 # ------------------- Загрузка логов -------------------
 with open('core/lexicon/logging.yaml', 'r', encoding='utf-8') as file:
     LOGGING_LEXICON = yaml.safe_load(file)  # Словарь с текстами для логирования

@@ -1,5 +1,6 @@
 import yaml
 
+
 # ------------------- Загрузка словаря бота -------------------
 # lexicon.yaml содержит тексты сообщений, кнопки, подсказки и т.д.
 with open('bot/lexicon/lexicon.yaml', 'r', encoding='utf-8') as file:

@@ -1,6 +1,7 @@
 from typing import Set
 from pymorphy3 import MorphAnalyzer
 
+
 def normalize_word(word: str, morph: MorphAnalyzer) -> str:
     """
     Приводит слово к его нормальной форме с помощью pymorphy3.

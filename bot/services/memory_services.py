@@ -1,71 +1,74 @@
 from typing import List
-
 from openai import AsyncOpenAI
+
 from database.repositories import UsersMemoriesRepository
 from core.utils.ai_utils import AiMemoryUtils
 
 
 class MemoryService:
     """
-    Сервис для работы с памятью пользователя.
+    Сервис для управления пользовательской памятью.
 
-    Основные функции:
-    - Сохранять значимые сообщения пользователя в базу памяти.
-    - Получать релевантные прошлые сообщения по вектору.
+    Возможности:
+    - Сохраняет значимые сообщения пользователя в базу (embedding + текст).
+    - Извлекает наиболее релевантные прошлые сообщения по векторному поиску.
 
     Ограничения:
-    - Храним не более 50 сообщений на пользователя.
+    - Для каждого пользователя хранится максимум 50 сообщений.
     """
 
     @staticmethod
     async def save(
-            user_id: int,
-            text: str,
-            vector: List[float],
-            openai_client: AsyncOpenAI,
-            model: str
+        user_id: int,
+        text: str,
+        vector: List[float],
+        openai_client: AsyncOpenAI,
+        model: str
     ) -> None:
         """
-        Сохраняет сообщение пользователя в базу памяти, если оно значимо.
+        Сохраняет сообщение пользователя в память, если оно важно для последующих диалогов.
 
-        Процесс:
-        1. Проверяет через AI, стоит ли сохранять сообщение (AiMemoryUtils.is_ai_should_save).
-        2. Если сообщение не значимо, выходит.
-        3. Если количество сохраненных сообщений < 50, сохраняет сообщение через UsersMemoriesRepository.
+        Логика:
+        1. Проверяем, является ли сообщение значимым:
+           - Содержит ли ключевые слова (правило).
+           - Если нет — уточняем у AI.
+        2. Игнорируем вопросы (они нужны только для поиска, но не для сохранения).
+        3. Проверяем лимит памяти (50 сообщений).
+        4. Если условия выполнены — сохраняем через репозиторий.
 
         Args:
             user_id (int): ID пользователя.
             text (str): Сообщение пользователя.
-            vector (List[float]): Векторное представление сообщения для поиска по embedding.
-            openai_client (AsyncOpenAI): Асинхронный клиент OpenAI для вызова AI.
-            model (str): Модель для генерации embedding.
+            vector (List[float]): Векторное представление текста.
+            openai_client (AsyncOpenAI): Асинхронный клиент OpenAI.
+            model (str): Модель, используемая для фильтрации (решение о сохранении).
         """
-        # Проверка, нужно ли сохранять сообщение
-        should_save = await AiMemoryUtils.is_ai_should_save(text, openai_client, model)
-        if not should_save:
-            return
+        # --- Определяем, стоит ли сохранять ---
+        if AiMemoryUtils.contains_important_keyword(text):
+            should_save = True
+        else:
+            should_save = await AiMemoryUtils.ask_ai_is_important(text, openai_client, model) == "да"
 
-        # Проверяем текущий счетчик памяти пользователя
+        # --- Проверяем лимит и тип сообщения ---
         count = await UsersMemoriesRepository.count_memories(user_id)
-        if count < 50:
-            # Сохраняем память
+        if count < 50 and should_save and not AiMemoryUtils.is_question(text):
             await UsersMemoriesRepository.safe_memory(user_id, text, vector, openai_client, model)
 
     @staticmethod
     async def get(
-            user_id: int,
-            vector: List[float],
-            limit: int = 5
+        user_id: int,
+        vector: List[float],
+        limit: int = 5
     ) -> List[str]:
         """
-        Получает релевантные сообщения из памяти пользователя.
+        Извлекает релевантные воспоминания пользователя из памяти.
 
         Args:
             user_id (int): ID пользователя.
-            vector (List[float]): Векторное представление запроса для поиска.
-            limit (int, optional): Максимальное количество сообщений для возврата. По умолчанию 5.
+            vector (List[float]): Вектор запроса (embedding текущего сообщения).
+            limit (int, optional): Максимальное количество воспоминаний. По умолчанию 5.
 
         Returns:
-            List[str]: Список текстов сообщений, наиболее релевантных вектору запроса.
+            List[str]: Список сообщений из памяти, упорядоченных по близости к запросу.
         """
         return await UsersMemoriesRepository.get_memory(user_id, vector, limit)

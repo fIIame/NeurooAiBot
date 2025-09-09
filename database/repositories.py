@@ -9,30 +9,63 @@ from openai import AsyncOpenAI
 from database.database import DatabaseConfig, Base
 from database.models import UsersOrm, UsersMemoriesOrm
 from core.lexicon import LOGGING_LEXICON
-from core.utils.ai_utils import AiMemoryUtils
+
 
 logger = logging.getLogger(__name__)
 
 
 class AsyncRepository:
+    """
+    Базовый асинхронный репозиторий для работы с базой данных.
+
+    Содержит общие методы для создания таблиц и обработки ошибок.
+    """
+
     @staticmethod
     async def create_tables() -> None:
+        """
+        Создает все таблицы базы данных, определенные в метаданных SQLAlchemy.
+
+        Логи:
+            INFO при успешном создании таблиц.
+            ERROR при возникновении ошибок SQLAlchemy или неожиданных ошибок.
+        """
         try:
             async with DatabaseConfig.get_engine().begin() as connection:
                 await connection.run_sync(Base.metadata.create_all)
                 logger.info(LOGGING_LEXICON["logging"]["database"]["tables"]["created"])
 
         except SQLAlchemyError as e:
-            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["create_sqlalchemy_error"].format(e))
+            logger.error(
+                LOGGING_LEXICON["logging"]["database"]["tables"]["create_sqlalchemy_error"].format(e)
+            )
 
         except Exception as e:
-            logger.error(LOGGING_LEXICON["logging"]["database"]["tables"]["create_unexpected_error"].format(e))
+            logger.error(
+                LOGGING_LEXICON["logging"]["database"]["tables"]["create_unexpected_error"].format(e)
+            )
 
 
 class UsersRepository(AsyncRepository):
+    """
+    Репозиторий для работы с пользователями.
+
+    Методы:
+        - add_user: Добавление нового пользователя.
+        - set_user_active: Активация пользователя.
+        - is_user_activated: Проверка статуса активации пользователя.
+    """
 
     @staticmethod
     async def add_user(user_id: int, first_name: str) -> None:
+        """
+        Добавляет нового пользователя в базу данных.
+        Если пользователь уже существует, дублирование игнорируется.
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+            first_name (str): Имя пользователя.
+        """
         try:
             async with DatabaseConfig.get_session() as session:
                 query = (
@@ -51,6 +84,12 @@ class UsersRepository(AsyncRepository):
 
     @staticmethod
     async def set_user_active(user_id: int) -> None:
+        """
+        Устанавливает статус пользователя как активный.
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+        """
         try:
             async with DatabaseConfig.get_session() as session:
                 query = update(UsersOrm).filter_by(id=user_id).values(is_activate=True)
@@ -65,6 +104,15 @@ class UsersRepository(AsyncRepository):
 
     @staticmethod
     async def is_user_activated(user_id: int) -> Optional[bool]:
+        """
+        Проверяет, активирован ли пользователь.
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+
+        Returns:
+            Optional[bool]: True если активирован, False если не активирован, None при ошибке.
+        """
         try:
             async with DatabaseConfig.get_session() as session:
                 query = select(UsersOrm).filter_by(id=user_id)
@@ -80,29 +128,72 @@ class UsersRepository(AsyncRepository):
 
 
 class UsersMemoriesRepository(AsyncRepository):
+    """
+    Репозиторий для работы с памятью пользователей (UsersMemories).
+
+    Методы:
+        - safe_memory: Безопасное добавление памяти с защитой от дубликатов.
+        - get_memory: Получение наиболее релевантных сообщений по embedding.
+        - count_memories: Подсчет количества сообщений памяти для пользователя.
+    """
+
     @staticmethod
     async def safe_memory(user_id: int, text: str, vector: List[float], openai_client: AsyncOpenAI, model: str) -> None:
+        """
+        Сохраняет сообщение пользователя в базу памяти.
+        Игнорирует дубликаты сообщений (по уникальному полю message_text).
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+            text (str): Текст сообщения.
+            vector (List[float]): Векторное представление сообщения для поиска.
+            openai_client (AsyncOpenAI): Клиент OpenAI (не используется прямо здесь, но нужен для согласованного интерфейса).
+            model (str): Модель (для совместимости интерфейса).
+        """
         async with DatabaseConfig.get_session() as session:
-            query = insert(UsersMemoriesOrm).values(user_id=user_id, message_text=text, embedding=vector)
+            query = (
+                insert(UsersMemoriesOrm)
+                .values(user_id=user_id, message_text=text, embedding=vector)
+                .on_conflict_do_nothing(index_elements=['message_text'])
+            )
             await session.execute(query)
             await session.commit()
 
     @staticmethod
     async def get_memory(user_id: int, vector: List[float], limit: int = 5) -> List[str]:
+        """
+        Получает релевантные сообщения памяти пользователя по embedding.
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+            vector (List[float]): Вектор запроса для поиска похожих сообщений.
+            limit (int): Максимальное количество сообщений для возврата.
+
+        Returns:
+            List[str]: Список текстов сообщений, наиболее релевантных запросу.
+        """
         async with DatabaseConfig.get_session() as session:
             query = (
-                select(UsersMemoriesOrm.message_text).
-                filter_by(user_id=user_id).
-                order_by(UsersMemoriesOrm.embedding.op("<->")(vector))
+                select(UsersMemoriesOrm.message_text)
+                .filter_by(user_id=user_id)
+                .order_by(UsersMemoriesOrm.embedding.op("<->")(vector))
                 .limit(limit)
             )
 
             result = await session.execute(query)
-            rows = result.scalars().all()
-            return list(rows)
+            return result.scalars().all()
 
     @staticmethod
     async def count_memories(user_id: int) -> int:
+        """
+        Подсчитывает количество сохраненных сообщений памяти пользователя.
+
+        Args:
+            user_id (int): ID пользователя Telegram.
+
+        Returns:
+            int: Количество сообщений памяти пользователя.
+        """
         async with DatabaseConfig.get_session() as session:
             query = select(func.count()).select_from(UsersMemoriesOrm).filter_by(user_id=user_id)
             result = await session.execute(query)

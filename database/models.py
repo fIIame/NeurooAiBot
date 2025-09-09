@@ -8,10 +8,19 @@ from pgvector.sqlalchemy import Vector
 from database.database import Base
 
 
+# Удобный алиас для строк фиксированной длины
 str_100 = Annotated[str, mapped_column(String(100))]
 
 
 class UsersOrm(Base):
+    """
+    ORM-модель для таблицы пользователей.
+
+    Колонки:
+    - id: уникальный идентификатор пользователя (Telegram user_id)
+    - first_name: имя пользователя (до 100 символов)
+    - is_activate: флаг активации пользователя (True, если пользователь прошёл активацию)
+    """
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
@@ -20,6 +29,16 @@ class UsersOrm(Base):
 
 
 class UsersMemoriesOrm(Base):
+    """
+    ORM-модель для таблицы памяти пользователей.
+
+    Колонки:
+    - id: уникальный идентификатор записи памяти
+    - user_id: ID пользователя (связь с UsersOrm)
+    - message_text: текстовое сообщение пользователя (уникальное)
+    - embedding: векторное представление сообщения (для поиска по схожести)
+    - created_at: дата и время создания записи
+    """
     __tablename__ = 'users_memories'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
