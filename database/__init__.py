@@ -1,1 +1,1 @@
-from .init_db import init_db
+from .setup import setup_db_connections

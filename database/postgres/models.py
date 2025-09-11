@@ -5,7 +5,7 @@ from sqlalchemy import String, BIGINT, BOOLEAN, TIMESTAMP
 from sqlalchemy.orm import mapped_column, Mapped
 from pgvector.sqlalchemy import Vector
 
-from database.database import Base
+from database.postgres.manager import Base
 
 
 # Удобный алиас для строк фиксированной длины

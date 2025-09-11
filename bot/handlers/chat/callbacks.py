@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery
 
 from bot.keyboards.callback_fabrics import ChatCallback
 from bot.lexicon import BOT_LEXICON
-from database.repositories import UsersRepository
+from database.postgres.repositories import UsersRepository
 
 
 router = Router()

@@ -1,60 +1,61 @@
-import re
 from typing import List
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from core.lexicon import RULE_BASED_LEXICON, SYSTEM_PROMPTS_LEXICON, BAD_WORDS_LEXICON
-from core.utils.text_normalization import normalize_text
+from core.lexicon import SYSTEM_PROMPTS_LEXICON
 
 
 class AiMemoryUtils:
-    # ------------------- Векторизация -------------------
+    """
+    Утилиты для работы с памятью пользователя.
+
+    Основные функции:
+    - Генерация векторного представления текста (embedding) для хранения в памяти.
+    - Оценка значимости сообщения через AI (для фильтрации важного контента).
+    """
+
+    # ------------------- Генерация embedding -------------------
 
     @staticmethod
     async def generate_embedding(text: str, openai_client: AsyncOpenAI, model: str) -> List[float]:
-        """Получает embedding-вектор для текста."""
+        """
+        Генерирует векторное представление текста пользователя.
+
+        Args:
+            text (str): Текст сообщения.
+            openai_client (AsyncOpenAI): Асинхронный клиент OpenAI.
+            model (str): Модель для генерации embedding.
+
+        Returns:
+            List[float]: Векторное представление текста (embedding).
+        """
         emb = await openai_client.embeddings.create(
             model=model,
             input=text
         )
         return emb.data[0].embedding
 
-    # ------------------- Rule-based фильтры -------------------
-
-    @staticmethod
-    def is_short(text: str) -> bool:
-        """Сообщение слишком короткое (<3 слов)."""
-        return len(text.split()) < 3
-
-    @staticmethod
-    def is_noise(text: str) -> bool:
-        """Сообщение соответствует шаблонам "шума" (например, случайные символы)."""
-        return any(re.match(pattern, text) for pattern in RULE_BASED_LEXICON["rules"]["noise_patterns"])
-
-    @staticmethod
-    def is_question(text: str) -> bool:
-        """Сообщение является вопросом."""
-        return text.strip().endswith("?")
-
-    @staticmethod
-    def contains_important_keyword(text: str) -> bool:
-        """Сообщение содержит важные ключевые слова."""
-        words = text.lower()
-        return any(keyword.lower() in words for keyword in RULE_BASED_LEXICON["rules"]["important_keywords"])
-
-    @staticmethod
-    def contains_bad_words(text: str) -> bool:
-        """Проверка на плохие слова."""
-        words = set(re.findall(r"\w+", text.lower()))
-        normalized_words = normalize_text(words)
-        return not normalized_words.isdisjoint(BAD_WORDS_LEXICON)
-
-    # ------------------- OpenAI фильтр -------------------
+    # ------------------- Оценка важности через AI -------------------
 
     @staticmethod
     async def ask_ai_is_important(text: str, openai_client: AsyncOpenAI, model: str) -> str:
-        """Запрос к AI: стоит ли сохранять сообщение."""
+        """
+        Определяет, следует ли сохранять сообщение, с помощью AI.
+
+        Логика:
+        1. Использует системный промпт из lexicon для правил фильтрации.
+        2. Отправляет текст пользователя как пользовательское сообщение.
+        3. Получает ответ модели: "да" или "нет".
+
+        Args:
+            text (str): Текст сообщения пользователя.
+            openai_client (AsyncOpenAI): Асинхронный клиент OpenAI.
+            model (str): Модель для генерации ответа (например, "GPT-5-mini").
+
+        Returns:
+            str: Ответ AI в нижнем регистре ("да" или "нет"), указывающий, стоит ли сохранять сообщение.
+        """
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system",
@@ -65,14 +66,10 @@ class AiMemoryUtils:
                 content=text
             )
         ]
+
         response = await openai_client.chat.completions.create(
             model=model,
             messages=messages
         )
+
         return response.choices[0].message.content.strip().lower()
-
-    # ------------------- Основной фильтр -------------------
-
-    @classmethod
-    def is_spam(cls, text: str) -> bool:
-        return cls.is_noise(text) or cls.is_short(text) or cls.contains_bad_words(text)

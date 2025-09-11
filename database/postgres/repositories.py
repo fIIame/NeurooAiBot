@@ -4,10 +4,9 @@ from typing import Optional, List
 from sqlalchemy import update, select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
-from openai import AsyncOpenAI
 
-from database.database import DatabaseConfig, Base
-from database.models import UsersOrm, UsersMemoriesOrm
+from database.postgres.manager import PostgresManager, Base
+from database.postgres.models import UsersOrm, UsersMemoriesOrm
 from core.lexicon import LOGGING_LEXICON
 
 
@@ -31,7 +30,7 @@ class AsyncRepository:
             ERROR при возникновении ошибок SQLAlchemy или неожиданных ошибок.
         """
         try:
-            async with DatabaseConfig.get_engine().begin() as connection:
+            async with PostgresManager.get_engine().begin() as connection:
                 await connection.run_sync(Base.metadata.create_all)
                 logger.info(LOGGING_LEXICON["logging"]["database"]["tables"]["created"])
 
@@ -67,7 +66,7 @@ class UsersRepository(AsyncRepository):
             first_name (str): Имя пользователя.
         """
         try:
-            async with DatabaseConfig.get_session() as session:
+            async with PostgresManager.get_session() as session:
                 query = (
                     insert(UsersOrm)
                     .values(id=user_id, first_name=first_name)
@@ -91,7 +90,7 @@ class UsersRepository(AsyncRepository):
             user_id (int): ID пользователя Telegram.
         """
         try:
-            async with DatabaseConfig.get_session() as session:
+            async with PostgresManager.get_session() as session:
                 query = update(UsersOrm).filter_by(id=user_id).values(is_activate=True)
                 await session.execute(query)
                 await session.commit()
@@ -114,7 +113,7 @@ class UsersRepository(AsyncRepository):
             Optional[bool]: True если активирован, False если не активирован, None при ошибке.
         """
         try:
-            async with DatabaseConfig.get_session() as session:
+            async with PostgresManager.get_session() as session:
                 query = select(UsersOrm).filter_by(id=user_id)
                 result = await session.execute(query)
                 user = result.scalars().first()
@@ -138,7 +137,7 @@ class UsersMemoriesRepository(AsyncRepository):
     """
 
     @staticmethod
-    async def safe_memory(user_id: int, text: str, vector: List[float], openai_client: AsyncOpenAI, model: str) -> None:
+    async def safe_memory(user_id: int, text: str, vector: List[float]) -> None:
         """
         Сохраняет сообщение пользователя в базу памяти.
         Игнорирует дубликаты сообщений (по уникальному полю message_text).
@@ -147,10 +146,8 @@ class UsersMemoriesRepository(AsyncRepository):
             user_id (int): ID пользователя Telegram.
             text (str): Текст сообщения.
             vector (List[float]): Векторное представление сообщения для поиска.
-            openai_client (AsyncOpenAI): Клиент OpenAI (не используется прямо здесь, но нужен для согласованного интерфейса).
-            model (str): Модель (для совместимости интерфейса).
         """
-        async with DatabaseConfig.get_session() as session:
+        async with PostgresManager.get_session() as session:
             query = (
                 insert(UsersMemoriesOrm)
                 .values(user_id=user_id, message_text=text, embedding=vector)
@@ -172,7 +169,7 @@ class UsersMemoriesRepository(AsyncRepository):
         Returns:
             List[str]: Список текстов сообщений, наиболее релевантных запросу.
         """
-        async with DatabaseConfig.get_session() as session:
+        async with PostgresManager.get_session() as session:
             query = (
                 select(UsersMemoriesOrm.message_text)
                 .filter_by(user_id=user_id)
@@ -181,7 +178,7 @@ class UsersMemoriesRepository(AsyncRepository):
             )
 
             result = await session.execute(query)
-            return result.scalars().all()
+            return list(result.scalars().all())
 
     @staticmethod
     async def count_memories(user_id: int) -> int:
@@ -194,7 +191,7 @@ class UsersMemoriesRepository(AsyncRepository):
         Returns:
             int: Количество сообщений памяти пользователя.
         """
-        async with DatabaseConfig.get_session() as session:
+        async with PostgresManager.get_session() as session:
             query = select(func.count()).select_from(UsersMemoriesOrm).filter_by(user_id=user_id)
             result = await session.execute(query)
             return result.scalar()

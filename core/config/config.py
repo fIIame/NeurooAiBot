@@ -4,7 +4,7 @@ from typing import List, Optional
 from environs import Env
 
 
-class Database:
+class PostgresConfig:
     """
     Класс для хранения конфигурации подключения к базе данных.
 
@@ -55,11 +55,13 @@ class Config:
 
     Attributes:
         tg_bot (TgBot): Настройки Telegram-бота.
-        db (Database): Настройки базы данных.
-        aitunnel_api_key (str): API-ключ для Aitunnel.
+        postgres (PostgresConfig): Настройки подключения к базе данных.
+        redis_url (str): URL для подключения к Redis.
+        aitunnel_api_key (str): API-ключ для сервиса Aitunnel.
     """
     tg_bot: TgBot
-    db: Database
+    postgres: PostgresConfig
+    redis_url: str
     aitunnel_api_key: str
 
 
@@ -81,14 +83,15 @@ def load_config(path: Optional[str] = None) -> Config:
             token=env.str("BOT_TOKEN"),
             admin_ids=list(map(int, env.list("ADMIN_IDS")))  # преобразуем строки в int
         ),
-        db=Database(
+        postgres=PostgresConfig(
             db_host=env.str("DB_HOST"),
             db_port=env.int("DB_PORT"),
             db_user=env.str("DB_USER"),
             db_pass=env.str("DB_PASS"),
             db_name=env.str("DB_NAME")
         ),
-        aitunnel_api_key=env.str("AITUNNEL_API_KEY"),
+        redis_url=env.str("REDIS_URL"),
+        aitunnel_api_key=env.str("AITUNNEL_API_KEY")
     )
 
     return config
